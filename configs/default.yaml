@@ -1,0 +1,7 @@
+defaults:
+  - ../main@_here_
+  - env_cfg: environment
+  - exp_cfg: experiment
+
+epochs: 12
+epoch_steps: 2500

@@ -1,0 +1,4 @@
+use_tb: False
+log_int: 2000
+log_dir: '' # filled by defaults
+exp_name: 'exp'
