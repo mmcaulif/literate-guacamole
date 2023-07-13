@@ -37,8 +37,6 @@ def main(cfg):
 
     logging.info(hydra_cfg.run.dir)
 
-    exit()
-
     # backup main and agent file
     date_key = datetime.now().strftime('%Y-%m-%d')
     time_key = datetime.now().strftime('%H-%M-%S')
@@ -50,15 +48,16 @@ def main(cfg):
     shutil.copyfile('main.py', outputs_dir + 'main.txt')
     shutil.copyfile('agent.py', outputs_dir + 'agent.txt')
 
-    # https://github.com/DLR-RM/rl-baselines3-zoo/blob/07f74478ae208089654641d2df94a733ec6da1cd/hyperparams/sac.yml#L25
     env = gym.make(cfg.env_cfg.env_name)
 
-    act_dims = env.action_space.shape[0]
+    # exit()
+
+    act_dims = env.action_space.n    # .shape[0]
     obs_dims = env.observation_space.shape[0]
 
     agent = DQN(
         env=env,
-        critic=Qfunc(obs_dims, act_dims),
+        network=Qfunc(obs_dims, act_dims),
         warmup_len=1_000,
         gamma=cfg.env_cfg.gamma,
         logger_kwargs=dict(
@@ -72,7 +71,6 @@ def main(cfg):
 
     for epochs in range(cfg.epochs):
         avg_r = agent.fit(cfg.epoch_steps)
-        # print(avg_r)
 
 if __name__ == '__main__':
     main()

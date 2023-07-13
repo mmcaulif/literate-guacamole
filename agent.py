@@ -39,11 +39,11 @@ class DQN():
 		self.optimizer = th.optim.Adam(network.parameters(), lr=self.lr)
 
 		self.gamma = gamma
-		self.taret_update = target_update
+		self.target_update = target_update
 
 	def fit(self, grad_steps):
 		for t in range(grad_steps):
-			batch = self.runner.get_batch(self.actor)
+			batch = self.runner.get_batch(self.network)
 			s, a, r, s_p, d, i = batch()
 			self._update(t, s, a, r, s_p, d, i)
 

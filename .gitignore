@@ -4,6 +4,4 @@ __pycache__
 build
 *.egg-info
 
-# keeping old experiments is probs actually a good idea!!
-# run
-# outputs
+experiments/
