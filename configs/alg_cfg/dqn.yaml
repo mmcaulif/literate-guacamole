@@ -1,0 +1,2 @@
+algo: DQN
+gamma: 0.99

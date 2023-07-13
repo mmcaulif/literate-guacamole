@@ -1,7 +1,8 @@
 defaults:
   - ../main@_here_
-  - env_cfg: environment
-  - exp_cfg: experiment
+  - exp_cfg: blank
+  - alg_cfg: dqn
 
+env_name: CartPole-v1
 epochs: 12
 epoch_steps: 2500

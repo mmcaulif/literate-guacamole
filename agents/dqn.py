@@ -7,6 +7,7 @@ import torch.nn.functional as F
 class DQN():
 	def __init__(
 			self,
+			cfg,
 			env,
 			network,
 			batch_size=64,
@@ -17,6 +18,7 @@ class DQN():
 			target_update=10,
 			logger_kwargs=None):
 		 
+		self.cfg = cfg
 		self.env = env
 		self.runner = cardio_rl.Runner(
 			env=env,

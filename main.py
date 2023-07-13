@@ -9,8 +9,7 @@ import shutil
 
 from datetime import datetime
 from omegaconf import OmegaConf
-from gymnasium.wrappers import RescaleAction
-from agent import DQN
+from agents.dqn import DQN
 from hydra.core.hydra_config import HydraConfig
 
 logging.basicConfig(format='%(asctime)s: %(message)s', datefmt=' %I:%M:%S %p', level=logging.INFO)
@@ -31,7 +30,7 @@ class Qfunc(nn.Module):
 
 @hydra.main(version_base=None, config_path="configs", config_name="default")
 def main(cfg):
-    logging.info(OmegaConf.to_yaml(cfg))
+    logging.info(f'\n{OmegaConf.to_yaml(cfg)}')
 
     hydra_cfg = HydraConfig.get()
 
@@ -45,21 +44,28 @@ def main(cfg):
     if not os.path.exists(outputs_dir):
         os.makedirs(outputs_dir)
 
+    # Maybe not needed
+    """
     shutil.copyfile('main.py', outputs_dir + 'main.txt')
     shutil.copyfile('agent.py', outputs_dir + 'agent.txt')
+    """
 
-    env = gym.make(cfg.env_cfg.env_name)
+    env = gym.make(cfg.env_name)
 
     # exit()
 
     act_dims = env.action_space.n    # .shape[0]
     obs_dims = env.observation_space.shape[0]
 
-    agent = DQN(
+    alg_dict = {'DQN': DQN}
+    algorithm = alg_dict[cfg.alg_cfg.algo]
+
+    agent = algorithm(
+        cfg=cfg.alg_cfg,
         env=env,
         network=Qfunc(obs_dims, act_dims),
         warmup_len=1_000,
-        gamma=cfg.env_cfg.gamma,
+        gamma=cfg.alg_cfg.gamma,
         logger_kwargs=dict(
             tensorboard=cfg.exp_cfg.use_tb,
             log_interval=cfg.exp_cfg.log_int,
