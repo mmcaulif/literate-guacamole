@@ -4,4 +4,4 @@ defaults:
   - exp_cfg: experiment
 
 epochs: 12
-epoch_steps: 2500
+epoch_steps: 1250

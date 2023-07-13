@@ -9,8 +9,7 @@ import shutil
 
 from datetime import datetime
 from omegaconf import OmegaConf
-from gymnasium.wrappers import RescaleAction
-from agent import DQN
+from agent import GaussianDQN
 from hydra.core.hydra_config import HydraConfig
 
 logging.basicConfig(format='%(asctime)s: %(message)s', datefmt=' %I:%M:%S %p', level=logging.INFO)
@@ -23,11 +22,20 @@ class Qfunc(nn.Module):
             nn.Linear(obs_dims, 64),
             nn.ReLU(),
             nn.Linear(64, 64),
-            nn.ReLU(),
+            nn.ReLU(),)
+        
+        self.mean = nn.Sequential(
+            nn.Linear(64, act_dims))
+        
+        self.log_std = nn.Sequential(
             nn.Linear(64, act_dims))
 
-    def forward(self, state):
-        return self.net(state)
+    def forward(self, state, sample=False):
+        h = self.net(state)
+        if sample:
+            return self.mean(h), self.log_std(h).exp()
+        
+        return self.mean(h)
 
 @hydra.main(version_base=None, config_path="configs", config_name="default")
 def main(cfg):
@@ -50,16 +58,16 @@ def main(cfg):
 
     env = gym.make(cfg.env_cfg.env_name)
 
-    # exit()
-
-    act_dims = env.action_space.n    # .shape[0]
+    act_dims = env.action_space.n
     obs_dims = env.observation_space.shape[0]
 
-    agent = DQN(
+    agent = GaussianDQN(
         env=env,
         network=Qfunc(obs_dims, act_dims),
         warmup_len=1_000,
         gamma=cfg.env_cfg.gamma,
+        gdqn=cfg.env_cfg.gdqn,
+        y_estimate=cfg.env_cfg.y_estimate,
         logger_kwargs=dict(
             tensorboard=cfg.exp_cfg.use_tb,
             log_interval=cfg.exp_cfg.log_int,

@@ -1,0 +1,4 @@
+use_tb: True
+log_int: 1000
+log_dir: '' # filled by defaults
+exp_name: 'gdqn2_exp'

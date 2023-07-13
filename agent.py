@@ -3,8 +3,9 @@ import cardio_rl
 import numpy as np
 import torch as th
 import torch.nn.functional as F
+from torch.distributions import Normal
 
-class DQN():
+class GaussianDQN():
 	def __init__(
 			self,
 			env,
@@ -13,6 +14,8 @@ class DQN():
 			train_freq=4,
 			warmup_len=100,
 			gamma=0.99,
+			gdqn=False,
+			y_estimate='mean',
 			lr=2.3e-3,
 			target_update=10,
 			logger_kwargs=None):
@@ -39,6 +42,8 @@ class DQN():
 		self.optimizer = th.optim.Adam(network.parameters(), lr=self.lr)
 
 		self.gamma = gamma
+		self.gdqn = gdqn
+		self.y_estimate = y_estimate
 		self.target_update = target_update
 
 	def fit(self, grad_steps):
@@ -51,11 +56,32 @@ class DQN():
 		return np.mean(self.runner.collector.logger.episodic_rewards)
 
 	def _update(self, t, s, a, r, s_p, d, i):
-		with th.no_grad():
-			q_p = th.max(self.targ_net(s_p), keepdim=True, dim=-1).values
-			y = r + self.gamma * q_p * (1 - d)
+			
+		if self.gdqn:
+			with th.no_grad():
+				if self.y_estimate == 'mean':
+					q_p = th.max(self.targ_net(s_p), keepdim=True, dim=-1).values
 
-		q = self.network(s).gather(1, a.long())
+				elif self.y_estimate == 'sample':
+					mu_p, std_p = self.targ_net(s_p, True)
+					mu_p = th.max(mu_p, keepdim=True, dim=-1).values
+					std_p = th.max(std_p, keepdim=True, dim=-1).values
+					q_p = Normal(mu_p, std_p).rsample()
+
+				y = r + self.gamma * q_p * (1 - d)
+
+			mu, std = self.network(s, True)
+			mu = mu.gather(1, a.long())
+			std = std.gather(1, a.long())
+			q_dist = Normal(mu, std)
+			q = q_dist.rsample()
+
+		else:
+			with th.no_grad():
+				q_p = th.max(self.targ_net(s_p), keepdim=True, dim=-1).values
+				y = r + self.gamma * q_p * (1 - d)
+
+			q = self.network(s).gather(1, a.long())
 
 		loss = F.mse_loss(q, y)
 
